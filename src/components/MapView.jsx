@@ -14,10 +14,28 @@ const IS_LOCAL =
   typeof window !== 'undefined' &&
   /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname)
 
+// Estimated popup height (carousel + details). Used to leave room above the
+// marker so the whole card is visible.
+const POPUP_H = 520
+
 function FlyToSelected({ selected }) {
   const map = useMap()
   useEffect(() => {
-    if (selected) map.flyTo([selected.lat, selected.lng], 12, { duration: 0.6 })
+    if (!selected) return
+    // Defer so that on mobile (where the map was just un-hidden) it has its real
+    // size before we measure — otherwise positioning is computed against 0px.
+    const t = setTimeout(() => {
+      const z = Math.max(map.getZoom(), 12)
+      const size = map.getSize()
+      const mPix = map.project([selected.lat, selected.lng], z)
+      // Place the marker low enough that the card (which opens upward) clears the
+      // top — but never below the bottom overlays. Clamp to the viewport.
+      const desiredY = Math.min(size.y - 90, POPUP_H + 110)
+      const centerPix = [mPix.x, mPix.y - (desiredY - size.y / 2)]
+      const center = map.unproject(centerPix, z)
+      map.flyTo(center, z, { duration: 0.6 })
+    }, 260)
+    return () => clearTimeout(t)
   }, [selected, map])
   return null
 }
@@ -99,7 +117,7 @@ export default function MapView({
               }}
               eventHandlers={{ click: () => onSelect(r.id) }}
             >
-              <Popup>
+              <Popup autoPan={false}>
                 <ListingPopup r={r} />
               </Popup>
             </CircleMarker>
