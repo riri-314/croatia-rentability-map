@@ -27,6 +27,10 @@ const VERDICT_SHORT_FR = {
 }
 export const verdictShortFr = (v) => VERDICT_SHORT_FR[v] || v
 
+// Property type → French.
+const TYPE_FR = { apartment: 'Appartement', house: 'Maison' }
+export const typeFr = (t) => TYPE_FR[t] || t
+
 // Sort options (key + French label).
 export const SORT_OPTIONS = [
   { key: 'payback',     label: 'Amortissement (croissant)' },

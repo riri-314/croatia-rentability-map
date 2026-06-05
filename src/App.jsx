@@ -18,6 +18,8 @@ export default function App() {
   // --- search / filter / sort ---
   const [query, setQuery] = useState('')
   const [cityFilter, setCityFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState('all')
   const [minBedrooms, setMinBedrooms] = useState(0)
   const [seaOnly, setSeaOnly] = useState(false)
   const [sortBy, setSortBy] = useState('payback')
@@ -72,9 +74,13 @@ export default function App() {
     [dataset.listings, budget, targetPaybackYears],
   )
 
-  // City list for the filter dropdown.
+  // Option lists for the filter dropdowns.
   const cities = useMemo(
     () => [...new Set(dataset.listings.map((l) => l.city))].sort((a, b) => a.localeCompare(b, 'fr')),
+    [dataset.listings],
+  )
+  const sources = useMemo(
+    () => [...new Set(dataset.listings.map((l) => l.source).filter(Boolean))].sort(),
     [dataset.listings],
   )
 
@@ -83,13 +89,15 @@ export default function App() {
     const q = query.trim().toLowerCase()
     const filtered = scored.filter((r) => {
       if (cityFilter !== 'all' && r.city !== cityFilter) return false
+      if (typeFilter !== 'all' && r.propertyType !== typeFilter) return false
+      if (sourceFilter !== 'all' && r.source !== sourceFilter) return false
       if (minBedrooms > 0 && (r.bedrooms || 0) < minBedrooms) return false
       if (seaOnly && !r.seaView) return false
       if (q && !`${r.title} ${r.city} ${r.address}`.toLowerCase().includes(q)) return false
       return true
     })
     return sortResults(filtered, sortBy)
-  }, [scored, query, cityFilter, minBedrooms, seaOnly, sortBy])
+  }, [scored, query, cityFilter, typeFilter, sourceFilter, minBedrooms, seaOnly, sortBy])
 
   const matching = results.filter((r) => r.meetsTarget)
   const selected = results.find((r) => r.id === selectedId) || null
@@ -106,6 +114,11 @@ export default function App() {
         cities={cities}
         cityFilter={cityFilter}
         setCityFilter={setCityFilter}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+        sources={sources}
+        sourceFilter={sourceFilter}
+        setSourceFilter={setSourceFilter}
         minBedrooms={minBedrooms}
         setMinBedrooms={setMinBedrooms}
         seaOnly={seaOnly}

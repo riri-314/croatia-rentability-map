@@ -1,6 +1,6 @@
 import React from 'react'
 import { fmtEur } from '../lib/rental.js'
-import { conditionFr, verdictShortFr, SORT_OPTIONS } from '../lib/i18n.js'
+import { conditionFr, verdictShortFr, typeFr, SORT_OPTIONS } from '../lib/i18n.js'
 
 export default function Sidebar({
   budget,
@@ -12,6 +12,11 @@ export default function Sidebar({
   cities,
   cityFilter,
   setCityFilter,
+  typeFilter,
+  setTypeFilter,
+  sources,
+  sourceFilter,
+  setSourceFilter,
   minBedrooms,
   setMinBedrooms,
   seaOnly,
@@ -82,12 +87,19 @@ export default function Sidebar({
           onChange={(e) => setQuery(e.target.value)}
         />
         <div className="filter-row">
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            <option value="all">Tous les biens</option>
+            <option value="apartment">Appartements</option>
+            <option value="house">Maisons</option>
+          </select>
           <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
             <option value="all">Toutes les villes</option>
             {cities.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
+        </div>
+        <div className="filter-row">
           <select value={minBedrooms} onChange={(e) => setMinBedrooms(Number(e.target.value))}>
             <option value="0">Chambres : toutes</option>
             <option value="1">1+ chambre</option>
@@ -95,6 +107,14 @@ export default function Sidebar({
             <option value="3">3+ chambres</option>
             <option value="4">4+ chambres</option>
           </select>
+          {sources.length > 1 && (
+            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+              <option value="all">Toutes les sources</option>
+              {sources.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="filter-row">
           <select className="grow" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
@@ -139,7 +159,7 @@ export default function Sidebar({
               <span className="card-price">{fmtEur(r.price)}</span>
             </div>
             <div className="card-meta">
-              {r.city} · {r.sizeM2} m² · {conditionFr(r.condition)}
+              {r.propertyType ? typeFr(r.propertyType) + ' · ' : ''}{r.city} · {r.sizeM2} m² · {conditionFr(r.condition)}
               {r.seaView ? ' · vue mer' : ''}
             </div>
             <div className="card-stats">

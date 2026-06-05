@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
 import { fmtEur } from '../lib/rental.js'
-import { conditionFr, verdictFr, fmtDate } from '../lib/i18n.js'
+import { conditionFr, verdictFr, typeFr, fmtDate } from '../lib/i18n.js'
 
 // Dalmatia roughly centred.
 const CENTER = [43.5, 16.6]
@@ -98,6 +98,7 @@ function ListingPopup({ r }) {
       <div className="popup-addr">{r.address}</div>
       <table className="popup-table">
         <tbody>
+          <tr><td>Type</td><td>{typeFr(r.propertyType)}</td></tr>
           <tr><td>Prix</td><td>{fmtEur(r.price)}</td></tr>
           <tr><td>Surface</td><td>{r.sizeM2} m² · {r.bedrooms} ch.</td></tr>
           <tr><td>État</td><td>{conditionFr(r.condition)}{r.seaView ? ' · vue mer' : ''}</td></tr>
@@ -140,7 +141,7 @@ function ListingPopup({ r }) {
 
       {r.url && (
         <a className="popup-link" href={r.url} target="_blank" rel="noreferrer">
-          Voir l'annonce d'origine ↗
+          Voir l'annonce d'origine{r.source ? ` (${r.source})` : ''} ↗
         </a>
       )}
     </div>

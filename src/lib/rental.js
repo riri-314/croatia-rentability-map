@@ -54,8 +54,10 @@ export function baselineNightly(listing) {
   const conditionFactor = listing.conditionFactor ?? 1
   const seaFactor = listing.seaView ? 1.12 : 1
   const proximityFactor = listing.distanceToSea < 300 ? 1.08 : 1
+  // Houses/villas (more private space, often a pool/garden) command a premium.
+  const typeFactor = listing.propertyType === 'house' ? 1.1 : 1
 
-  return Math.round(base * bedroomFactor * conditionFactor * seaFactor * proximityFactor)
+  return Math.round(base * bedroomFactor * conditionFactor * seaFactor * proximityFactor * typeFactor)
 }
 
 // Full seasonal projection for one listing.
@@ -95,10 +97,14 @@ export function analyzeListing(listing) {
 }
 
 // Compare a listing's suggested nightly rate against the average nightly rate
-// of SIMILAR apartments (same city, same bedroom count) in the dataset.
+// of SIMILAR properties (same city, type, and bedroom count) in the dataset.
 export function compareToMarket(listing, allListings) {
   const peers = allListings.filter(
-    (l) => l.city === listing.city && l.bedrooms === listing.bedrooms && l.id !== listing.id,
+    (l) =>
+      l.city === listing.city &&
+      l.bedrooms === listing.bedrooms &&
+      (l.propertyType || null) === (listing.propertyType || null) &&
+      l.id !== listing.id,
   )
   if (peers.length === 0) {
     return { peerCount: 0, avgNightly: null, deltaPct: 0, verdict: 'none' }
