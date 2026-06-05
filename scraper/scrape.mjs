@@ -15,14 +15,18 @@
 //   node scraper/scrape.mjs --source nekretnine.hr   # only one source
 //   node scraper/scrape.mjs --delay 2000    # ms between requests
 
-import { writeFile, mkdir } from 'node:fs/promises'
+import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 import nekretnine from './sources/nekretnine.mjs'
+import oglasnik from './sources/oglasnik.mjs'
 
 // --- registered sources ---
-const SOURCES = [nekretnine]
+// nekretnine.hr is fast (plain HTTP). oglasnik.hr drives a headless browser and
+// geocodes towns, so it's slower — run it explicitly with --source oglasnik.hr,
+// or include it in a full run when you want the extra coverage.
+const SOURCES = [nekretnine, oglasnik]
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = join(__dirname, '..', 'src', 'data', 'scraped-listings.json')
@@ -52,6 +56,27 @@ async function main() {
   const byId = new Map() // `${source}:${id}` -> listing
   const seen = new Set() // cross-source near-dup keys
   const perSource = {}
+
+  // Merge mode: when running only some sources, keep existing listings from the
+  // sources we're NOT re-running, so a partial refresh doesn't drop them.
+  // `--replace` forces a clean full overwrite.
+  const REPLACE = process.argv.includes('--replace')
+  const activeIds = new Set(active.map((s) => s.id))
+  if (!REPLACE) {
+    try {
+      const prev = JSON.parse(await readFile(OUT, 'utf8'))
+      const prevList = Array.isArray(prev) ? prev : prev.listings || []
+      for (const l of prevList) {
+        if (l.source && activeIds.has(l.source)) continue // will be refreshed
+        const idKey = `${l.source}:${l.id}`
+        if (byId.has(idKey)) continue
+        byId.set(idKey, l)
+        seen.add(dupKey(l))
+        perSource[l.source] = (perSource[l.source] || 0) + 1
+      }
+      if (byId.size) console.log(`(kept ${byId.size} listings from other sources)\n`)
+    } catch { /* no existing file */ }
+  }
 
   for (const source of active) {
     console.log(`▸ ${source.name} (${source.id})`)

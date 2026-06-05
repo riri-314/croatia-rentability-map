@@ -38,9 +38,12 @@ function dataApi() {
         if (req.method !== 'POST') return send(res, 405, { error: 'POST only' })
         const url = new URL(req.url, 'http://localhost')
         const pages = String(parseInt(url.searchParams.get('pages') || '4', 10))
-        const child = spawn('node', [SCRAPER, '--pages', pages, '--delay', '1200'], {
-          cwd: __dirname,
-        })
+        // Default to the fast HTTP source; merge mode preserves browser-sourced
+        // data. Pass ?source=all to also re-run the slower Playwright sources.
+        const source = url.searchParams.get('source') || 'nekretnine.hr'
+        const args = [SCRAPER, '--pages', pages, '--delay', '1200']
+        if (source !== 'all') args.push('--source', source)
+        const child = spawn('node', args, { cwd: __dirname })
         let log = ''
         child.stdout.on('data', (d) => (log += d))
         child.stderr.on('data', (d) => (log += d))

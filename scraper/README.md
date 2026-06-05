@@ -28,13 +28,14 @@ export default {
 to the `SOURCES` array in `scrape.mjs`. Nothing else changes — merge, dedupe,
 the API, and the UI filters all pick it up automatically.
 
-> Note: most other Croatian portals are impractical to scrape — Njuškalo and
-> Realitica are bot-walled (Incapsula / CloudFront CAPTCHA), while Crozilla and
-> Oglasnik are client-side SPAs with no server-rendered data. nekretnine.hr is
-> the reliable source today; the adapter pattern is here so adding another is a
-> drop-in when a viable one appears.
+> Note on other Croatian portals: Njuškalo, Realitica and **Crozilla** are
+> bot-walled (Incapsula / CloudFront / Imperva reese84) and impractical even with
+> a headless browser. **Oglasnik** is a Cloudflare-fronted SPA that a real browser
+> *can* load — see the Playwright source below.
 
-## The nekretnine.hr source
+## The two sources
+
+### nekretnine.hr
 
 Each search-results page on nekretnine.hr (part of the immobiliare.it network)
 embeds a Next.js `__NEXT_DATA__` JSON blob with the **full structured listing
@@ -44,6 +45,27 @@ visual/markup changes. It covers two categories — apartments (`prodaja-stanovi
 and detached houses (`prodaja-samostojeca-kuce`) — across all four counties:
 Split-Dalmatia, Dubrovnik-Neretva, Šibenik-Knin, Zadar.
 
+### oglasnik.hr (headless browser)
+
+Oglasnik is a Cloudflare-fronted SPA, so this adapter drives **Chromium via
+Playwright**, reads the rendered listing cards, keeps only the four Dalmatian
+counties, derives bedrooms from the Croatian title (or estimates from size), and
+**geocodes** each town to coordinates via OpenStreetMap Nominatim (cached in
+`geocache.json`). It's slower than the HTTP source, so it's opt-in.
+
+**Prerequisite** (one-time):
+
+```bash
+npm install                      # installs playwright (devDependency)
+npx playwright install chromium  # downloads the browser (~120 MB)
+```
+
+Run it on its own — merge mode keeps the other source's listings:
+
+```bash
+node scraper/scrape.mjs --source oglasnik.hr --pages 5
+```
+
 ## Usage
 
 ```bash
@@ -52,7 +74,12 @@ node scraper/scrape.mjs --pages 10            # deeper
 node scraper/scrape.mjs --pages 264           # a category's full depth
 node scraper/scrape.mjs --delay 2000          # ms between requests (default 1500)
 node scraper/scrape.mjs --source nekretnine.hr  # only one source
+node scraper/scrape.mjs --replace               # full overwrite (don't merge)
 ```
+
+Running a **subset** of sources merges with the existing data file: it refreshes
+the sources you ran and keeps listings from the others. Use `--replace` to force
+a clean overwrite instead.
 
 After scraping, the dev server hot-reloads with the new data (or rebuild with
 `npm run build`).
@@ -63,9 +90,10 @@ After scraping, the dev server hot-reloads with the new data (or rebuild with
 - Only fetches the public SEO category pages (`/prodaja-stanovi/<county>/`),
   which are **not** disallowed by the site's `robots.txt` (only `/search-map`,
   `/ricerca.php`, `/dettaglio.php` etc. are).
-- For personal research use. Respect the site's Terms of Service; don't hammer
-  it (keep `--pages` and concurrency modest). This is not affiliated with
-  nekretnine.hr.
+- For personal research use. Respect each site's Terms of Service; don't hammer
+  them (keep `--pages` modest). Not affiliated with nekretnine.hr or oglasnik.hr.
+- Geocoding uses OpenStreetMap **Nominatim** with an identifying User-Agent,
+  ≤1 request/second, and an on-disk cache so towns are looked up only once.
 
 ## Data shape (per listing)
 

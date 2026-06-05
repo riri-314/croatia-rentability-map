@@ -29,8 +29,10 @@ you whether that rent is **above or below** comparable apartments nearby.
 
 - **React 18** + **Vite**
 - **Leaflet** / **react-leaflet** for the map
-- A **Node.js scraper** (no dependencies) that reads the structured data
-  embedded in nekretnine.hr search pages
+- **A pluggable Node.js scraper** with two source adapters:
+  - **nekretnine.hr** — reads structured data embedded in the search pages (HTTP)
+  - **oglasnik.hr** — drives **Playwright/Chromium** through a Cloudflare SPA,
+    then geocodes towns via OpenStreetMap Nominatim
 - A small **Vite dev-server API** for live data loading and refetch
 
 ## Getting started
@@ -59,14 +61,21 @@ The dataset is produced by the scraper. Refresh it in two ways:
 - **From the CLI**:
 
   ```bash
-  node scraper/scrape.mjs                 # ~300 listings (default, 3 pages/county)
-  node scraper/scrape.mjs --pages 10      # deeper
-  node scraper/scrape.mjs --pages 264     # a county's full depth
-  node scraper/scrape.mjs --delay 2000    # ms between requests (be polite)
+  node scraper/scrape.mjs                        # both sources, 4 pages each
+  node scraper/scrape.mjs --pages 10             # deeper
+  node scraper/scrape.mjs --source nekretnine.hr # one source (merges with the rest)
+  node scraper/scrape.mjs --delay 2000           # ms between requests (be polite)
   ```
 
-See [`scraper/README.md`](scraper/README.md) for how the scraper works and its
-politeness/legality notes.
+The **oglasnik.hr** source needs a browser (one-time):
+
+```bash
+npx playwright install chromium
+```
+
+The UI refetch button uses the fast HTTP source by default and keeps the
+browser-sourced listings via merge mode. See [`scraper/README.md`](scraper/README.md)
+for how each source works and its politeness/legality notes.
 
 ## Project structure
 
@@ -76,7 +85,10 @@ politeness/legality notes.
 ├── scraper/
 │   ├── scrape.mjs           # orchestrator: runs sources, merges, dedupes
 │   ├── sources/
-│   │   └── nekretnine.mjs    # source adapter (apartments + houses)
+│   │   ├── nekretnine.mjs    # HTTP source adapter (apartments + houses)
+│   │   └── oglasnik.mjs      # Playwright/browser source adapter
+│   ├── lib/geocode.mjs      # cached Nominatim geocoder
+│   ├── explore-browser.mjs  # recon helper for finding a SPA's data
 │   └── README.md
 └── src/
     ├── App.jsx              # state: budget, filters, data loading, refetch

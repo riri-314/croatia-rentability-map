@@ -7,6 +7,13 @@ import { conditionFr, verdictFr, typeFr, fmtDate } from '../lib/i18n.js'
 const CENTER = [43.5, 16.6]
 const ZOOM = 8
 
+// The refetch backend (/api/refetch) only exists under the local dev server.
+// In a deployed/static build (e.g. Firebase Hosting) there's no backend, so hide
+// the button there.
+const IS_LOCAL =
+  typeof window !== 'undefined' &&
+  /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname)
+
 function FlyToSelected({ selected }) {
   const map = useMap()
   useEffect(() => {
@@ -44,10 +51,14 @@ export default function MapView({
         <div className="data-meta">
           {when ? `Récupérées le ${when}` : 'Date de récupération inconnue'}
         </div>
-        <button className="refetch-btn" onClick={onRefetch} disabled={refetching}>
-          {refetching ? '⟳ Récupération…' : '⟳ Actualiser les données'}
-        </button>
-        {refetchError && <div className="data-error">{refetchError}</div>}
+        {IS_LOCAL && (
+          <>
+            <button className="refetch-btn" onClick={onRefetch} disabled={refetching}>
+              {refetching ? '⟳ Récupération…' : '⟳ Actualiser les données'}
+            </button>
+            {refetchError && <div className="data-error">{refetchError}</div>}
+          </>
+        )}
       </div>
 
       <MapContainer center={CENTER} zoom={ZOOM} className="map" scrollWheelZoom>

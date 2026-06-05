@@ -15,4 +15,14 @@ npm-debug.log*
 
 # env
 .env
-.env.local
+.env.*
+
+# firebase (deploy cache + debug logs)
+.firebase/
+firebase-debug.log
+.firebase-debug.log
+
+# credentials — never commit these
+*serviceAccount*.json
+*-key.json
+*.pem
