@@ -104,10 +104,19 @@ async function scrape({ pages = 3, delay = 1500, log = console.log } = {}) {
             if (!href || seen.has(href)) continue
             seen.add(href)
             const img = card.querySelector('img[alt]')
+            // The card's hover-carousel stores image URLs in data-original-image-N
+            // attributes; collect them (fall back to the visible <img> src).
+            const photos = []
+            const holder = card.querySelector('[data-original-image-1]') || card
+            for (const at of holder.attributes || []) {
+              if (/^data-original-image-/.test(at.name) && at.value) photos.push(at.value)
+            }
+            if (!photos.length && img?.src) photos.push(img.src)
             rows.push({
               href,
               title: img?.getAttribute('alt') || a.innerText.slice(0, 120),
               text: card.innerText.replace(/\s+/g, ' ').trim(),
+              photos,
             })
           }
           return rows
@@ -152,6 +161,7 @@ async function scrape({ pages = 3, delay = 1500, log = console.log } = {}) {
             conditionFactor: 1.0,
             seaView,
             distanceToSea,
+            photos: (c.photos || []).slice(0, 12),
             url: `https://oglasnik.hr${c.href}`,
           })
           kept++

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
 import { fmtEur } from '../lib/rental.js'
 import { conditionFr, verdictFr, typeFr, fmtDate } from '../lib/i18n.js'
@@ -116,11 +116,60 @@ export default function MapView({
   )
 }
 
+// Swipeable image carousel: arrows, click/tap-to-advance, swipe, and a counter.
+function PhotoCarousel({ photos, title }) {
+  const [i, setI] = useState(0)
+  const [touch, setTouch] = useState(null)
+  if (!photos || !photos.length) return null
+  const n = photos.length
+  const step = (d) => setI((prev) => (prev + d + n) % n)
+
+  const onStart = (e) => setTouch(e.changedTouches[0].clientX)
+  const onEnd = (e) => {
+    if (touch == null) return
+    const dx = e.changedTouches[0].clientX - touch
+    if (Math.abs(dx) > 30) step(dx < 0 ? 1 : -1)
+    setTouch(null)
+  }
+
+  return (
+    <div className="carousel" onTouchStart={onStart} onTouchEnd={onEnd}>
+      <img
+        src={photos[i]}
+        alt={`${title} — photo ${i + 1}`}
+        loading="lazy"
+        onClick={() => step(1)}
+        title="Cliquez pour la photo suivante"
+      />
+      {n > 1 && (
+        <>
+          <button
+            className="car-nav prev"
+            onClick={(e) => { e.stopPropagation(); step(-1) }}
+            aria-label="Photo précédente"
+          >
+            ‹
+          </button>
+          <button
+            className="car-nav next"
+            onClick={(e) => { e.stopPropagation(); step(1) }}
+            aria-label="Photo suivante"
+          >
+            ›
+          </button>
+          <span className="car-count">{i + 1}/{n}</span>
+        </>
+      )}
+    </div>
+  )
+}
+
 function ListingPopup({ r }) {
   const a = r.analysis
   const m = r.market
   return (
     <div className="popup">
+      <PhotoCarousel photos={r.photos} title={r.title} />
       <h3>{r.title}</h3>
       <div className="popup-addr">{r.address}</div>
       <table className="popup-table">

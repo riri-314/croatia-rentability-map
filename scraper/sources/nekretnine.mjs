@@ -91,6 +91,15 @@ function normalize(entry, county, propertyType) {
   const { condition, conditionFactor } = mapCondition(prop.ga4Condition)
   const { seaView, distanceToSea } = seaSignals(`${re.title} ${prop.description || ''}`)
 
+  // Photos: the gallery exposes ids; build medium-size URLs (predictable pattern
+  // pic.nekretnine.hr/image/<id>/<size>.jpg). Cap to keep the data file small.
+  const photoList = (prop.multimedia && prop.multimedia.photos) || (prop.photo ? [prop.photo] : [])
+  const photos = photoList
+    .map((p) => p && p.id)
+    .filter(Boolean)
+    .slice(0, 12)
+    .map((pid) => `https://pic.nekretnine.hr/image/${pid}/m-c.jpg`)
+
   return {
     id: re.id,
     source: 'nekretnine.hr',
@@ -109,6 +118,7 @@ function normalize(entry, county, propertyType) {
     conditionFactor,
     seaView,
     distanceToSea,
+    photos,
     url: `https://www.nekretnine.hr/oglasi/${re.id}/`,
   }
 }
