@@ -245,6 +245,70 @@ body {
 .popup-seasons summary { cursor: pointer; font-size: 12px; color: #0ea5e9; }
 .popup-seasons { margin-top: 4px; }
 
+/* ---------- Mobile view switcher (hidden on desktop) ---------- */
+.mobile-tabs { display: none; }
+
 @media (max-width: 820px) {
-  .app { grid-template-columns: 1fr; grid-template-rows: 50vh 50vh; }
+  /* One panel at a time, full screen; toggled via .view-list / .view-map. */
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    height: 100vh;
+    height: 100dvh;
+  }
+  .sidebar, .map-wrap { grid-column: 1; grid-row: 1; min-height: 0; }
+  .app.view-list .map-wrap { display: none; }
+  .app.view-map .sidebar { display: none; }
+  .sidebar { border-right: none; }
+
+  /* Tighten the header to leave room for content. */
+  .brand { padding: 14px 16px 8px; }
+  .brand p { display: none; }
+  .controls, .filters, .summary { padding-left: 16px; padding-right: 16px; }
+
+  /* Keep last list items clear of the bottom tab bar. */
+  .list { padding-bottom: 76px; }
+
+  /* 16px form fonts stop iOS from zooming in on focus. */
+  .search, .filters select, .num, .field input[type='number'] { font-size: 16px; }
+
+  /* Compact the map data panel so it doesn't cover the map. */
+  .data-panel {
+    top: 8px;
+    right: 8px;
+    left: auto;
+    min-width: 0;
+    max-width: 62vw;
+    padding: 9px 11px;
+    gap: 6px;
+  }
+  .data-badge { font-size: 11px; }
+  .data-meta { font-size: 10px; }
+
+  /* Lift the legend above the tab bar. */
+  .legend { bottom: 70px; left: 8px; padding: 7px 10px; font-size: 11px; }
+
+  /* Bottom tab bar. */
+  .mobile-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 58px;
+    z-index: 1200;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mobile-tabs button {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .mobile-tabs button.active { color: var(--blue); background: var(--card); }
 }

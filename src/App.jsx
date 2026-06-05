@@ -25,6 +25,16 @@ export default function App() {
   const [sortBy, setSortBy] = useState('payback')
 
   const [selectedId, setSelectedId] = useState(null)
+  // Mobile: which panel is visible ('list' | 'map'). Ignored on desktop (CSS).
+  const [mobileView, setMobileView] = useState('list')
+
+  // Selecting a listing jumps to the map on small screens so it's visible.
+  function handleSelect(id) {
+    setSelectedId(id)
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 820px)').matches) {
+      setMobileView('map')
+    }
+  }
 
   // --- dataset (loaded at runtime so refetch updates without rebuild) ---
   const [dataset, setDataset] = useState({
@@ -103,7 +113,7 @@ export default function App() {
   const selected = results.find((r) => r.id === selectedId) || null
 
   return (
-    <div className="app">
+    <div className={'app view-' + mobileView}>
       <Sidebar
         budget={budget}
         setBudget={setBudget}
@@ -129,13 +139,13 @@ export default function App() {
         matching={matching}
         totalCount={dataset.listings.length}
         selectedId={selectedId}
-        onSelect={setSelectedId}
+        onSelect={handleSelect}
         usingReal={dataset.real}
       />
       <MapView
         results={results}
         selectedId={selectedId}
-        onSelect={setSelectedId}
+        onSelect={handleSelect}
         selected={selected}
         source={dataset.source}
         usingReal={dataset.real}
@@ -143,7 +153,24 @@ export default function App() {
         onRefetch={refetch}
         refetching={refetching}
         refetchError={refetchError}
+        mobileView={mobileView}
       />
+
+      {/* Mobile-only view switcher */}
+      <nav className="mobile-tabs">
+        <button
+          className={mobileView === 'list' ? 'active' : ''}
+          onClick={() => setMobileView('list')}
+        >
+          ☰ Liste{results.length ? ` (${results.length})` : ''}
+        </button>
+        <button
+          className={mobileView === 'map' ? 'active' : ''}
+          onClick={() => setMobileView('map')}
+        >
+          📍 Carte
+        </button>
+      </nav>
     </div>
   )
 }

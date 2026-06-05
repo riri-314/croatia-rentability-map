@@ -22,6 +22,20 @@ function FlyToSelected({ selected }) {
   return null
 }
 
+// On mobile the map is hidden (display:none) while the list is shown; Leaflet
+// then renders gray tiles because it measured a zero-size container. Recompute
+// its size whenever the map becomes the active view.
+function InvalidateOnShow({ view }) {
+  const map = useMap()
+  useEffect(() => {
+    if (view === 'map') {
+      const t = setTimeout(() => map.invalidateSize(), 220)
+      return () => clearTimeout(t)
+    }
+  }, [view, map])
+  return null
+}
+
 function markerColor(r) {
   if (r.meetsTarget) return '#16a34a' // vert — atteint l'objectif d'amortissement
   return '#d97706' // ambre — dans le budget mais amortissement plus lent
@@ -38,6 +52,7 @@ export default function MapView({
   onRefetch,
   refetching,
   refetchError,
+  mobileView,
 }) {
   const when = fmtDate(scrapedAt)
   return (
@@ -67,6 +82,7 @@ export default function MapView({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FlyToSelected selected={selected} />
+        <InvalidateOnShow view={mobileView} />
 
         {results.map((r) => {
           const isSel = r.id === selectedId
